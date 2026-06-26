@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<!-- saved from url=(0074)file:///C:/Users/skywings555/Documents/kimi/workspace/lastet_supabase.html -->
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>觉醒之道账号审批系统</title>
+    <style>
+        :root {
+            --primary: #4f8cff;
+            --primary-dark: #3a6fd9;
+            --primary-light: #eaf1ff;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --warning: #f59e0b;
+            --warning-light: #fffbeb;
+            --danger: #f87171;
+            --danger-light: #fef2f2;
+            --info: #60a5fa;
+            --info-light: #eff6ff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --bg-body: #f1f5f9;
+            --bg-card: #ffffff;
+            --border: #e2e8f0;
+            --border-light: #f1f5f9;
+            --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.04);
+            --shadow: 0 1px 3px 0 rgba(0,0,0,0.08), 0 1px 2px 0 rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -1px rgba(0,0,0,0.04);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04);
+            --radius: 10px;
+            --radius-lg: 16px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-body);
+            min-height:100vh;
+            color: var(--text-primary);
+            line-height:1.6;
+        }
+
+        /* ===== 图标通用 ===== */
+        .icon { width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .icon svg { width:100%; height:100%; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; fill:none; }
+        .icon-sm { width:14px; height:14px; }
+        .icon-md { width:18px; height:18px; }
+        .icon-lg { width:24px; height:24px; }
+        .icon-xl { width:32px; height:32px; }
+        .icon-2xl { width:48px; height:48px; }
+
+        /* ===== 顶部品牌栏 ===== */
+        .brand-bar {
+            background: linear-gradient(135deg, #4f8cff 0%, #3b82f6 50%, #0ea5e9 100%);
+            color:#fff; padding:24px 0; position:relative; overflow:hidden;
+        }
+        .brand-inner { max-width:1200px; margin:0 auto; padding:0 20px; display:flex; align-items:center; gap:16px; position:relative; z-index:1; }
+        .brand-icon { width:48px; height:48px; background:rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.15); }
+        .brand-icon .icon { color:#fff; }
+        .brand-text h1 { font-size:22px; font-weight:600; letter-spacing:0.5px; text-shadow:0 1px 2px rgba(0,0,0,0.1); }
+        .brand-text p { font-size:13px; opacity:0.85; margin-top:2px; }
+
+        /* ===== 系统状态提示 ===== */
+        .sys-alert {
+            background: var(--danger-light); color: #b91c1c; border: 1px solid #fecaca;
+            padding: 10px 20px; font-size: 14px; text-align: center; display: none;
+        }
+        .sys-alert.active { display: block; }
+
+        /* ===== 用户信息栏 ===== */
+        .user-bar { background:var(--bg-card); border-bottom:1px solid var(--border); padding:12px 0; display:none; }
+        .user-bar.active { display:block; }
+        .user-bar-inner { max-width:1200px; margin:0 auto; padding:0 20px; display:flex; justify-content:space-between; align-items:center; }
+        .breadcrumb { display:flex; align-items:center; gap:8px; font-size:14px; color:var(--text-secondary); }
+        .breadcrumb a { color:var(--primary); text-decoration:none; cursor:pointer; display:flex; align-items:center; gap:4px; }
+        .breadcrumb a:hover { color:var(--primary-dark); }
+        .breadcrumb .sep { color:var(--text-muted); }
+        .breadcrumb .current { color:var(--text-primary); font-weight:500; }
+        .user-info { display:flex; align-items:center; gap:12px; font-size:14px; }
+        .user-avatar { width:32px; height:32px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600; }
+        .user-name { color:var(--text-primary); font-weight:500; }
+        .user-role { font-size:12px; color:var(--text-muted); background:var(--bg-body); padding:2px 8px; border-radius:20px; }
+        .logout-link { color:var(--danger); font-size:13px; cursor:pointer; display:flex; align-items:center; gap:4px; }
+        .logout-link:hover { opacity:0.8; }
+
+        /* ===== 主内容区 ===== */
+        .main-content { max-width:1200px; margin:0 auto; padding:0 20px; }
+        .page { display:none; animation:fadeInUp 0.35s ease-out; }
+        .page.active { display:block; }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
+
+        /* ===== 首页 ===== */
+        .hero-section { text-align:center; padding:48px 0 32px; }
+        .hero-section h2 { font-size:26px; font-weight:700; color:var(--text-primary); margin-bottom:8px; }
+        .hero-section .sub-title { color:var(--text-secondary); font-size:15px; }
+        .role-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px; padding-bottom:40px; }
+        .role-card {
+            background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:36px 28px;
+            text-align:center; cursor:pointer; transition:all 0.3s ease; position:relative; overflow:hidden;
+        }
+        .role-card::after { content:""; position:absolute; bottom:0; left:0; right:0; height:4px; background:transparent; transition:background 0.3s; }
+        .role-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); border-color:var(--primary); }
+        .role-card:hover::after { background:var(--primary); }
+        .role-card .icon-circle { width:72px; height:72px; border-radius:50%; margin:0 auto 20px; display:flex; align-items:center; justify-content:center; transition:transform 0.3s; }
+        .role-card:hover .icon-circle { transform:scale(1.08); }
+        .role-card .icon-circle.blue { background:var(--info-light); color:var(--primary); }
+        .role-card .icon-circle.green { background:var(--success-light); color:var(--success); }
+        .role-card .icon-circle.purple { background:#f5f3ff; color:#8b5cf6; }
+        .role-card h3 { font-size:18px; font-weight:600; margin-bottom:8px; color:var(--text-primary); }
+        .role-card .desc { color:var(--text-secondary); font-size:14px; line-height:1.6; margin-bottom:20px; }
+        .role-card .arrow { color:var(--text-muted); transition:color 0.3s, transform 0.3s; }
+        .role-card:hover .arrow { color:var(--primary); transform:translateX(4px); }
+
+        /* ===== 按钮 ===== */
+        .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 20px; border:none; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s ease; text-decoration:none; line-height:1; white-space:nowrap; }
+        .btn .icon { width:16px; height:16px; }
+        .btn-primary { background:var(--primary); color:#fff; box-shadow:0 2px 4px rgba(79,140,255,0.2); }
+        .btn-primary:hover { background:var(--primary-dark); box-shadow:0 4px 8px rgba(79,140,255,0.3); transform:translateY(-1px); }
+        .btn-outline { background:#fff; color:var(--text-primary); border:1px solid var(--border); }
+        .btn-outline:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+        .btn-success { background:var(--success); color:#fff; box-shadow:0 2px 4px rgba(16,185,129,0.2); }
+        .btn-success:hover { background:#059669; }
+        .btn-danger { background:var(--danger); color:#fff; box-shadow:0 2px 4px rgba(248,113,113,0.2); }
+        .btn-danger:hover { background:#dc2626; }
+        .btn-warning { background:var(--warning); color:#fff; box-shadow:0 2px 4px rgba(245,158,11,0.2); }
+        .btn-warning:hover { background:#d97706; }
+        .btn-sm { padding:6px 12px; font-size:13px; border-radius:6px; }
+        .btn-ghost { background:transparent; border:1px solid transparent; }
+        .btn-ghost:hover { background:var(--bg-body); }
+        .btn-group { display:flex; gap:8px; flex-wrap:wrap; }
+
+        /* ===== 表单 ===== */
+        .form-section { margin-bottom:24px; }
+        .form-section-title { font-size:14px; font-weight:600; color:var(--text-primary); margin-bottom:16px; padding-bottom:8px; border-bottom:1px solid var(--border-light); display:flex; align-items:center; gap:8px; }
+        .form-section-title .icon-wrap { width:24px; height:24px; border-radius:6px; display:flex; align-items:center; justify-content:center; }
+        .form-section-title .icon-wrap.blue { background:var(--info-light); color:var(--primary); }
+        .form-section-title .icon-wrap.green { background:var(--success-light); color:var(--success); }
+        .form-section-title .icon-wrap.orange { background:var(--warning-light); color:var(--warning); }
+        .form-section-title .icon-wrap.purple { background:#f5f3ff; color:#8b5cf6; }
+        .form-group { margin-bottom:16px; }
+        .form-group label { display:flex; align-items:center; gap:4px; margin-bottom:6px; font-size:14px; font-weight:500; color:var(--text-primary); }
+        .form-group .required::after { content:" *"; color:var(--danger); }
+        .form-group .hint { font-size:12px; color:var(--text-muted); margin-top:4px; }
+        .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:8px; font-size:14px; color:var(--text-primary); background:#fff; transition:all 0.2s ease; font-family:inherit; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(79,140,255,0.1); }
+        .form-group input::placeholder, .form-group textarea::placeholder { color:#cbd5e1; }
+        .form-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px; }
+        .form-actions { display:flex; justify-content:center; gap:12px; margin-top:32px; padding-top:24px; border-top:1px solid var(--border-light); }
+
+        /* ===== 登录框 ===== */
+        .login-card { max-width:420px; margin:48px auto; background:var(--bg-card); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); border:1px solid var(--border-light); overflow:hidden; }
+        .login-card-header { padding:32px 32px 0; text-align:center; }
+        .login-card-header .login-icon { width:56px; height:56px; border-radius:14px; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; }
+        .login-card-header .login-icon.blue { background:var(--info-light); color:var(--primary); }
+        .login-card-header .login-icon.green { background:var(--success-light); color:var(--success); }
+        .login-card-header h2 { font-size:20px; font-weight:600; color:var(--text-primary); }
+        .login-card-header p { font-size:14px; color:var(--text-secondary); margin-top:4px; }
+        .login-card-body { padding:24px 32px 32px; }
+
+        /* ===== 标签页 ===== */
+        .tabs-wrapper { background:var(--bg-card); border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--border-light); overflow:hidden; }
+        .tabs-nav { display:flex; border-bottom:1px solid var(--border-light); background:var(--bg-body); padding:0 8px; gap:4px; }
+        .tab-item { padding:14px 20px; cursor:pointer; color:var(--text-secondary); font-size:14px; font-weight:500; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all 0.2s; display:flex; align-items:center; gap:6px; position:relative; }
+        .tab-item:hover { color:var(--primary); }
+        .tab-item.active { color:var(--primary); border-bottom-color:var(--primary); background:var(--bg-card); }
+        .tab-item .badge { font-size:11px; background:var(--danger); color:#fff; padding:1px 6px; border-radius:10px; min-width:18px; text-align:center; }
+        .tab-content { display:none; padding:24px; }
+        .tab-content.active { display:block; animation:fadeInUp 0.25s ease-out; }
+
+        /* ===== 统计卡片 ===== */
+        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px; }
+        .stat-card { background:var(--bg-card); border-radius:var(--radius); padding:20px; border:1px solid var(--border-light); display:flex; align-items:center; gap:16px; transition:box-shadow 0.3s, transform 0.3s; }
+        .stat-card:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); }
+        .stat-icon { width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .stat-icon.blue { background:var(--info-light); color:var(--primary); }
+        .stat-icon.green { background:var(--success-light); color:var(--success); }
+        .stat-icon.orange { background:var(--warning-light); color:var(--warning); }
+        .stat-icon.red { background:var(--danger-light); color:var(--danger); }
+        .stat-info .stat-label { font-size:13px; color:var(--text-secondary); }
+        .stat-info .stat-value { font-size:24px; font-weight:700; color:var(--text-primary); line-height:1.2; }
+
+        /* ===== 表格 ===== */
+        .table-wrapper { border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+        .table-toolbar { padding:12px 16px; background:var(--bg-card); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+        .search-box { position:relative; min-width:240px; }
+        .search-box .icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--text-muted); pointer-events:none; }
+        .search-box input { width:100%; padding:8px 12px 8px 36px; border:1px solid var(--border); border-radius:8px; font-size:14px; transition:all 0.2s; }
+        .search-box input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(79,140,255,0.1); }
+        .table { width:100%; border-collapse:collapse; font-size:14px; }
+        .table th { padding:12px 16px; text-align:left; font-weight:600; color:var(--text-secondary); background:var(--bg-body); border-bottom:1px solid var(--border); font-size:13px; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; }
+        .table td { padding:14px 16px; border-bottom:1px solid var(--border-light); color:var(--text-primary); vertical-align:middle; }
+        .table tbody tr { transition:background 0.15s; }
+        .table tbody tr:hover { background:#fafbfc; }
+        .table tbody tr:last-child td { border-bottom:none; }
+        .action-btns { display:flex; gap:6px; flex-wrap:nowrap; }
+
+        /* ===== 空状态 ===== */
+        .empty-state { text-align:center; padding:48px 24px; }
+        .empty-state .icon { width:48px; height:48px; color:var(--text-muted); margin-bottom:12px; opacity:0.5; }
+        .empty-state p { color:var(--text-muted); font-size:14px; }
+
+        /* ===== 状态标签 ===== */
+        .status-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:500; line-height:1; white-space:nowrap; }
+        .status-badge .dot { width:6px; height:6px; border-radius:50%; }
+        .status-badge.status-pending { background:var(--warning-light); color:#b45309; }
+        .status-badge.status-pending .dot { background:var(--warning); }
+        .status-badge.status-approved { background:var(--success-light); color:#047857; }
+        .status-badge.status-approved .dot { background:var(--success); }
+        .status-badge.status-rejected { background:var(--danger-light); color:#b91c1c; }
+        .status-badge.status-rejected .dot { background:var(--danger); }
+        .status-badge.status-enabled { background:var(--success-light); color:#047857; }
+        .status-badge.status-enabled .dot { background:var(--success); }
+        .status-badge.status-disabled { background:var(--danger-light); color:#b91c1c; }
+        .status-badge.status-disabled .dot { background:var(--danger); }
+
+        /* ===== 提示框 ===== */
+        .alert { padding:12px 16px; border-radius:8px; font-size:14px; display:flex; align-items:center; gap:8px; margin-bottom:20px; }
+        .alert .icon { width:18px; height:18px; flex-shrink:0; }
+        .alert-success { background:var(--success-light); color:#047857; border:1px solid #d1fae5; }
+        .alert-error { background:var(--danger-light); color:#b91c1c; border:1px solid #fecaca; }
+        .alert-info { background:var(--info-light); color:#1e40af; border:1px solid #dbeafe; }
+
+        /* ===== Toast 提示 ===== */
+        .toast-container { position:fixed; top:20px; right:20px; z-index:2000; display:flex; flex-direction:column; gap:8px; }
+        .toast { background:var(--bg-card); border-radius:10px; box-shadow:var(--shadow-lg); border:1px solid var(--border); padding:14px 18px; display:flex; align-items:center; gap:10px; font-size:14px; min-width:280px; animation:toastIn 0.3s ease-out; position:relative; overflow:hidden; }
+        .toast::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; }
+        .toast.success::before { background:var(--success); }
+        .toast.error::before { background:var(--danger); }
+        .toast.info::before { background:var(--info); }
+        .toast .icon { width:18px; height:18px; flex-shrink:0; }
+        .toast.success .icon { color:var(--success); }
+        .toast.error .icon { color:var(--danger); }
+        .toast.info .icon { color:var(--info); }
+        .toast-close { margin-left:auto; cursor:pointer; color:var(--text-muted); transition:color 0.2s; }
+        .toast-close:hover { color:var(--text-primary); }
+        @keyframes toastIn { from{opacity:0;transform:translateX(20px);} to{opacity:1;transform:translateX(0);} }
+        @keyframes toastOut { from{opacity:1;transform:translateX(0);} to{opacity:0;transform:translateX(20px);} }
+        .toast.leaving { animation:toastOut 0.3s ease-in forwards; }
+
+        /* ===== 模态框 ===== */
+        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.5); z-index:1500; align-items:center; justify-content:center; backdrop-filter:blur(4px); opacity:0; transition:opacity 0.25s ease; }
+        .modal-overlay.active { display:flex; opacity:1; }
+        .modal-overlay.active .modal-box { transform:translateY(0) scale(1); opacity:1; }
+        .modal-box { background:var(--bg-card); border-radius:var(--radius-lg); width:90%; max-width:560px; max-height:85vh; overflow-y:auto; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); transform:translateY(20px) scale(0.96); opacity:0; transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+        .modal-header { padding:20px 24px; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center; }
+        .modal-header h3 { font-size:16px; font-weight:600; display:flex; align-items:center; gap:8px; }
+        .modal-header h3 .icon { color:var(--primary); }
+        .modal-close { cursor:pointer; color:var(--text-muted); transition:color 0.2s; display:flex; padding:4px; border-radius:6px; }
+        .modal-close:hover { color:var(--text-primary); background:var(--bg-body); }
+        .modal-body { padding:24px; }
+        .modal-footer { padding:16px 24px; border-top:1px solid var(--border-light); display:flex; justify-content:flex-end; gap:10px; }
+        .detail-row { display:flex; padding:10px 0; border-bottom:1px solid var(--border-light); align-items:flex-start; }
+        .detail-row:last-child { border-bottom:none; }
+        .detail-label { width:100px; flex-shrink:0; color:var(--text-secondary); font-size:13px; font-weight:500; }
+        .detail-value { flex:1; color:var(--text-primary); font-size:14px; word-break:break-word; }
+
+        /* ===== 加载中 ===== */
+        .loading-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); display:none; align-items:center; justify-content:center; z-index:3000; }
+        .loading-overlay.active { display:flex; }
+        .loading-spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--primary); border-radius:50%; animation:spin 0.8s linear infinite; }
+        @keyframes spin { to{transform:rotate(360deg);} }
+
+        /* ===== 响应式 ===== */
+        @media (max-width:768px) {
+            .role-grid { grid-template-columns:1fr; }
+            .stats-grid { grid-template-columns:repeat(2,1fr); }
+            .form-row { grid-template-columns:1fr; }
+            .table-toolbar { flex-direction:column; align-items:stretch; }
+            .search-box { min-width:100%; }
+            .action-btns { flex-wrap:wrap; }
+            .tabs-nav { overflow-x:auto; }
+            .user-bar-inner { flex-direction:column; gap:8px; align-items:flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast 容器 -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- 加载中 -->
+    <div class="loading-overlay" id="loading-overlay"><div class="loading-spinner"></div></div>
+
+    <!-- 系统状态提示 -->
+    <div class="sys-alert active" id="sys-alert">Supabase 库加载失败，请检查网络连接后刷新页面重试</div>
+
+    <!-- 顶部品牌栏 -->
+    <div class="brand-bar">
+        <div class="brand-inner">
+            <div class="brand-icon">
+                <span class="icon icon-lg"><svg viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.134l-2.5-6.368-2.5 6.368a2 2 0 0 0-1.437 1.366L0 12.852l4.832 1.968a2 2 0 0 0 1.336 1.336L8.136 21l1.968-4.832a2 2 0 0 0 1.366-1.437l6.368-2.5-6.368-2.5a2 2 0 0 0-1.366-1.437L8.136 3 6.168 7.832a2 2 0 0 0-1.336 1.336L0 12.136l4.832 1.968a2 2 0 0 0 1.437 1.366l2.5 6.368 2.5-6.368a2 2 0 0 0 1.437-1.366L21.864 12l-4.832-1.968a2 2 0 0 0-1.366-1.437l-2.5-6.368-2.5 6.368a2 2 0 0 0-1.437 1.366L4.864 12l4.832 1.968a2 2 0 0 0 1.366 1.437l6.368 2.5-6.368 2.5a2 2 0 0 0-1.366 1.437L8.136 21l1.968-4.832a2 2 0 0 0 1.366-1.437z"></path></svg></span>
+            </div>
+            <div class="brand-text">
+                <h1>觉醒之道账号审批系统</h1>
+                <p>安全、便捷、高效的账号管理服务</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户信息栏（登录后显示） -->
+    <div class="user-bar" id="user-bar">
+        <div class="user-bar-inner">
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <div class="user-info" id="user-info" style="display:none;">
+                <div class="user-avatar" id="user-avatar"></div>
+                <div>
+                    <div class="user-name" id="user-name"></div>
+                    <span class="user-role" id="user-role"></span>
+                </div>
+                <span class="logout-link" onclick="handleLogout()">
+                    <span class="icon icon-sm"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></span> 退出
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- ==================== 首页 ==================== -->
+        <div id="home-page" class="page active">
+            <div class="hero-section">
+                <h2>欢迎使用</h2>
+                <p class="sub-title">请选择您的角色，开始使用账号审批系统</p>
+            </div>
+            <div class="role-grid">
+                <div class="role-card" onclick="goToPage(&#39;applicant-page&#39;)">
+                    <div class="icon-circle blue">
+                        <span class="icon icon-2xl"><svg viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></span>
+                    </div>
+                    <h3>账号申请者</h3>
+                    <p class="desc">提交新账号开通申请，或申请解锁已有账号</p>
+                    <div class="arrow">
+                        <span class="icon icon-lg"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
+                    </div>
+                </div>
+                <div class="role-card" onclick="goToPage(&#39;approver-login-page&#39;)">
+                    <div class="icon-circle green">
+                        <span class="icon icon-2xl"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 12 15 16 10"></polyline></svg></span>
+                    </div>
+                    <h3>账号审批者</h3>
+                    <p class="desc">审核学员与志愿者的账号开通及解锁请求</p>
+                    <div class="arrow">
+                        <span class="icon icon-lg"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
+                    </div>
+                </div>
+                <div class="role-card" onclick="goToPage(&#39;admin-login-page&#39;)">
+                    <div class="icon-circle purple">
+                        <span class="icon icon-2xl"><svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+                    </div>
+                    <h3>系统管理员</h3>
+                    <p class="desc">管理审批者权限、全量审批操作及系统配置</p>
+                    <div class="arrow">
+                        <span class="icon icon-lg"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 账号申请者 ==================== -->
+        <div id="applicant-page" class="page">
+            <div style="padding:24px 0;">
+                <div class="tabs-wrapper">
+                    <div class="tabs-nav">
+                        <div class="tab-item active" data-tab="apply-tab" onclick="switchTab(this,&#39;apply-tab&#39;)">
+                            <span class="icon icon-sm"><svg viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></span> 账号申请
+                        </div>
+                        <div class="tab-item" data-tab="unlock-tab" onclick="switchTab(this,&#39;unlock-tab&#39;)">
+                            <span class="icon icon-sm"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span> 账号解锁
+                        </div>
+                    </div>
+                    <div class="tab-content active" id="apply-tab">
+                        <form id="account-apply-form">
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <div class="icon-wrap blue"><span class="icon icon-sm"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span></div> 基本信息
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label class="required">姓名</label><input type="text" name="name" required="" placeholder="请输入真实姓名"></div>
+                                    <div class="form-group"><label>法名</label><input type="text" name="dharma_name" placeholder="如有法名请填写"></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label class="required">手机号码</label><input type="tel" name="phone" required="" placeholder="请输入11位手机号"></div>
+                                    <div class="form-group"><label class="required">邮箱地址</label><input type="email" name="email" required="" placeholder="用于接收账号信息"></div>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <div class="icon-wrap green"><span class="icon icon-sm"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></span></div> 服务信息
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>服务岗位</label><input type="text" name="position" placeholder="例如：助教、义工"></div>
+                                    <div class="form-group"><label>所属区域</label><input type="text" name="area" placeholder="例如：华东区"></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>国家</label><input type="text" name="country" placeholder="例如：中国"></div>
+                                    <div class="form-group"><label>城市</label><input type="text" name="city" placeholder="例如：上海"></div>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <div class="icon-wrap orange"><span class="icon icon-sm"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></span></div> 课程信息
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>入学时间</label><input type="date" name="enroll_time"></div>
+                                    <div class="form-group"><label>辅导员</label><input type="text" name="counselor" placeholder="辅导员的姓名"></div>
+                                </div>
+                                <div class="form-group"><label>课程信息</label><textarea name="course_info" rows="3" placeholder="请填写已修或正在修习的课程"></textarea></div>
+                            </div>
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <div class="icon-wrap purple"><span class="icon icon-sm"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg></span></div> 申请信息
+                                </div>
+                                <div class="form-group">
+                                    <label class="required">账号类型</label>
+                                    <select name="account_type" required="">
+                                        <option value="">请选择账号类型</option>
+                                        <option value="student">学员账号</option>
+                                        <option value="volunteer">志愿者账号</option>
+                                        <option value="staff">工作人员账号</option>
+                                    </select>
+                                </div>
+                                <div class="form-group"><label>申请说明</label><textarea name="apply_desc" rows="3" placeholder="请简要说明申请原因（可选）"></textarea></div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-outline" onclick="goToPage(&#39;home-page&#39;)">
+                                    <span class="icon"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></span> 返回首页
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <span class="icon"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></span> 提交申请
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-content" id="unlock-tab">
+                        <form id="account-unlock-form" style="max-width:500px; margin:0 auto;">
+                            <div class="form-group"><label class="required">觉醒之道账号</label><input type="text" name="account_id" required="" placeholder="请输入需要解锁的账号"></div>
+                            <div class="form-group"><label class="required">绑定的邮箱</label><input type="email" name="email" required="" placeholder="请输入账号绑定的邮箱"></div>
+                            <div class="form-group"><label>解锁说明</label><textarea name="unlock_desc" rows="3" placeholder="请简要说明账号被锁原因或解锁需求"></textarea></div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-outline" onclick="goToPage(&#39;home-page&#39;)">
+                                    <span class="icon"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></span> 返回首页
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <span class="icon"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></span> 提交解锁申请
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 审批者登录 ==================== -->
+        <div id="approver-login-page" class="page">
+            <div class="login-card">
+                <div class="login-card-header">
+                    <div class="login-icon blue">
+                        <span class="icon icon-xl"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 12 15 16 10"></polyline></svg></span>
+                    </div>
+                    <h2>审批者登录</h2>
+                    <p>请使用管理员授权的邮箱地址登录</p>
+                </div>
+                <div class="login-card-body">
+                    <div id="approver-login-alert"></div>
+                    <form id="approver-login-form">
+                        <div class="form-group">
+                            <label class="required">授权邮箱</label>
+                            <div class="search-box">
+                                <span class="icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></span>
+                                <input type="email" name="email" required="" placeholder="请输入管理员授权的邮箱">
+                            </div>
+                        </div>
+                        <div style="text-align:center; margin-top:28px;">
+                            <button type="submit" class="btn btn-primary" style="width:100%;">
+                                <span class="icon"><svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg></span> 登录审批系统
+                            </button>
+                        </div>
+                    </form>
+                    <div style="text-align:center; margin-top:16px;">
+                        <a class="btn btn-ghost" style="color:var(--text-secondary);" onclick="goToPage(&#39;home-page&#39;)">
+                            <span class="icon"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></span> 返回首页
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 审批者主页面 ==================== -->
+        <div id="approver-main-page" class="page">
+            <div style="padding:24px 0;">
+                <div class="stats-grid" id="approver-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><span class="icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></span></div>
+                        <div class="stat-info"><div class="stat-label">待审批</div><div class="stat-value" id="approver-stat-pending">0</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><span class="icon"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span></div>
+                        <div class="stat-info"><div class="stat-label">已通过</div><div class="stat-value" id="approver-stat-approved">0</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg></span></div>
+                        <div class="stat-info"><div class="stat-label">已驳回</div><div class="stat-value" id="approver-stat-rejected">0</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange"><span class="icon"><svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg></span></div>
+                        <div class="stat-info"><div class="stat-label">全部</div><div class="stat-value" id="approver-stat-total">0</div></div>
+                    </div>
+                </div>
+                <div class="tabs-wrapper">
+                    <div class="tabs-nav">
+                        <div class="tab-item active" data-tab="approver-apply-tab" onclick="switchTab(this,&#39;approver-apply-tab&#39;)">
+                            <span class="icon icon-sm"><svg viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></span> 账号申请审批
+                            <span class="badge" id="badge-approver-apply">0</span>
+                        </div>
+                        <div class="tab-item" data-tab="approver-unlock-tab" onclick="switchTab(this,&#39;approver-unlock-tab&#39;)">
+                            <span class="icon icon-sm"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span> 账号解锁审批
+                            <span class="badge" id="badge-approver-unlock">0</span>
+                        </div>
+                    </div>
+                    <div class="tab-content active" id="approver-apply-tab">
+                        <div class="table-toolbar">
+                            <div class="alert alert-info" style="margin:0; flex:1;">
+                                <span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>
+                                <span>待审批的账号开通申请列表，请及时处理</span>
+                            </div>
+                            <div class="search-box">
+                                <span class="icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+                                <input type="text" id="search-approver-apply" placeholder="搜索姓名、邮箱..." oninput="filterTable(&#39;approver-apply-table&#39;, this.value)">
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="table" id="approver-apply-table"><thead><tr><th>申请时间</th><th>姓名</th><th>邮箱</th><th>账号类型</th><th>状态</th><th>操作</th></tr></thead><tbody></tbody></table>
+                        </div>
+                    </div>
+                    <div class="tab-content" id="approver-unlock-tab">
+                        <div class="table-toolbar">
+                            <div class="alert alert-info" style="margin:0; flex:1;">
+                                <span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>
+                                <span>待审批的账号解锁申请列表</span>
+                            </div>
+                            <div class="search-box">
+                                <span class="icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+                                <input type="text" id="search-approver-unlock" placeholder="搜索账号、邮箱..." oninput="filterTable(&#39;approver-unlock-table&#39;, this.value)">
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="table" id="approver-unlock-table"><thead><tr><th>申请时间</th><th>账号</th><th>绑定邮箱</th><th>状态</th><th>操作</th></tr></thead><tbody></tbody></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 管理员登录 ==================== -->
+        <div id="admin-login-page" class="page">
+            <div class="login-card">
+                <div class="login-card-header">
+                    <div class="login-icon green">
+                        <span class="icon icon-xl"><svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+                    </div>
+                    <h2>管理员登录</h2>
+                    <p>请输入管理员账号和密码进入后台</p>
+                </div>
+                <div class="login-card-body">
+                    <div id="admin-login-alert"></div>
+                    <form id="admin-login-form">
+                        <div class="form-group">
+                            <label class="required">管理员账号</label>
+                            <div class="search-box">
+                                <span class="icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
+                                <input type="text" name="username" required="" placeholder="请输入管理员账号">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="required">管理员密码</label>
+                            <div class="search-box">
+                                <span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+                                <input type="password" name="password" required="" placeholder="请输入管理员密码">
+                            </div>
+                        </div>
+                        <div style="text-align:center; margin-top:28px;">
+                            <button type="submit" class="btn btn-primary" style="width:100%;">
+                                <span class="icon"><svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg></span> 登录管理后台
+                            </button>
+                        </div>
+                    </form>
+                    <div style="text-align:center; margin-top:16px;">
+                        <a class="btn btn-ghost" style="color:var(--text-secondary);" onclick="goToPage(&#39;home-page&#39;)">
+                            <span class="icon"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></span> 返回首页
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 管理员主页面 ==================== -->
+        <div id="admin-main-page" class="page">
+            <div style="padding:24px 0;">
+                <div class="stats-grid" id="admin-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><span class="icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></span></div>
+                        <div class="stat-info"><div class="stat-label">待审批</div><div class="stat-value" id="admin-stat-pending">0</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><span class="icon"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span></div>
+                        <div class="stat-info"><div class="stat-label">已通过</div><div class="stat-value" id="admin-stat-approved">0</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg></span></div>
+                        <div class="stat-info"><div class="stat-label">已驳回</div><div class="stat-value" id="admin-stat-rejected">0</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange"><span class="icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span></div>
+                        <div class="stat-info"><div class="stat-label">审批者</div><div class="stat-value" id="admin-stat-approvers">0</div></div>
+                    </div>
+                </div>
+                <div class="tabs-wrapper">
+                    <div class="tabs-nav">
+                        <div class="tab-item active" data-tab="admin-approver-tab" onclick="switchTab(this,&#39;admin-approver-tab&#39;)">
+                            <span class="icon icon-sm"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span> 审批者管理
+                        </div>
+                        <div class="tab-item" data-tab="admin-apply-tab" onclick="switchTab(this,&#39;admin-apply-tab&#39;)">
+                            <span class="icon icon-sm"><svg viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></span> 账号申请审批
+                        </div>
+                        <div class="tab-item" data-tab="admin-unlock-tab" onclick="switchTab(this,&#39;admin-unlock-tab&#39;)">
+                            <span class="icon icon-sm"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span> 账号解锁审批
+                        </div>
+                        <div class="tab-item" data-tab="admin-admin-tab" onclick="switchTab(this,&#39;admin-admin-tab&#39;)">
+                            <span class="icon icon-sm"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span> 管理员账号
+                        </div>
+                        <div class="tab-item" data-tab="admin-config-tab" onclick="switchTab(this,&#39;admin-config-tab&#39;)">
+                            <span class="icon icon-sm"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg></span> 系统配置
+                        </div>
+                    </div>
+                    <div class="tab-content active" id="admin-approver-tab">
+                        <div class="table-toolbar">
+                            <h3 style="font-size:15px; font-weight:600; display:flex; align-items:center; gap:6px;">
+                                <span class="icon icon-sm" style="color:var(--primary);"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span> 审批者账号列表
+                            </h3>
+                            <button class="btn btn-success btn-sm" onclick="openModal(&#39;add-approver-modal&#39;)">
+                                <span class="icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></span> 新增审批者
+                            </button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="table" id="admin-approver-table"><thead><tr><th>序号</th><th>授权邮箱</th><th>状态</th><th>添加时间</th><th>操作</th></tr></thead><tbody></tbody></table>
+                        </div>
+                    </div>
+                    <div class="tab-content" id="admin-apply-tab">
+                        <div class="table-toolbar">
+                            <div class="alert alert-info" style="margin:0; flex:1;">
+                                <span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>
+                                <span>全量账号开通申请记录，管理员可执行所有审批操作</span>
+                            </div>
+                            <div class="search-box">
+                                <span class="icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+                                <input type="text" id="search-admin-apply" placeholder="搜索姓名、邮箱..." oninput="filterTable(&#39;admin-apply-table&#39;, this.value)">
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="table" id="admin-apply-table"><thead><tr><th>申请时间</th><th>姓名</th><th>邮箱</th><th>账号类型</th><th>状态</th><th>操作</th></tr></thead><tbody></tbody></table>
+                        </div>
+                    </div>
+                    <div class="tab-content" id="admin-unlock-tab">
+                        <div class="table-toolbar">
+                            <div class="alert alert-info" style="margin:0; flex:1;">
+                                <span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>
+                                <span>全量账号解锁申请记录</span>
+                            </div>
+                            <div class="search-box">
+                                <span class="icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+                                <input type="text" id="search-admin-unlock" placeholder="搜索账号、邮箱..." oninput="filterTable(&#39;admin-unlock-table&#39;, this.value)">
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="table" id="admin-unlock-table"><thead><tr><th>申请时间</th><th>账号</th><th>绑定邮箱</th><th>状态</th><th>操作</th></tr></thead><tbody></tbody></table>
+                        </div>
+                    </div>
+                    <div class="tab-content" id="admin-admin-tab">
+                        <div class="table-toolbar">
+                            <h3 style="font-size:15px; font-weight:600; display:flex; align-items:center; gap:6px;">
+                                <span class="icon icon-sm" style="color:var(--primary);"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span> 管理员账号列表
+                            </h3>
+                            <button class="btn btn-success btn-sm" onclick="openModal(&#39;add-admin-modal&#39;)">
+                                <span class="icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></span> 新增管理员
+                            </button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="table" id="admin-admin-table"><thead><tr><th>序号</th><th>账号</th><th>添加时间</th><th>操作</th></tr></thead><tbody></tbody></table>
+                        </div>
+                    </div>
+                    <div class="tab-content" id="admin-config-tab">
+                        <form id="admin-config-form">
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <div class="icon-wrap blue"><span class="icon icon-sm"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg></span></div> Supabase 配置（必填）
+                                </div>
+                                <div class="alert alert-info">
+                                    <span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>
+                                    <span>请先访问 <a href="https://supabase.com/" target="_blank" style="color:var(--primary); text-decoration:underline;">supabase.com</a> 注册账号，创建项目后获取下方配置。</span>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>Supabase URL</label><input type="text" name="supabase_url" placeholder="例如：https://abc123.supabase.co"></div>
+                                    <div class="form-group"><label>Supabase Anon Key</label><input type="text" name="supabase_anon_key" placeholder="例如：eyJhbGciOiJIUzI1NiIs..."></div>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <div class="icon-wrap green"><span class="icon icon-sm"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></span></div> 邮件通知配置（EmailJS）
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>EmailJS Service ID</label><input type="text" name="emailjs_service_id" placeholder="例如：service_xxx"></div>
+                                    <div class="form-group"><label>EmailJS Template ID</label><input type="text" name="emailjs_template_id" placeholder="例如：template_xxx"></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group"><label>EmailJS Public Key</label><input type="text" name="emailjs_public_key" placeholder="例如：abc123..."></div>
+                                    <div class="form-group"><label>管理员通知邮箱</label><input type="email" name="admin_notify_email" placeholder="用于接收申请提醒的邮箱"></div>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <div class="icon-wrap purple"><span class="icon icon-sm"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></span></div> 邮件通知模板
+                                </div>
+                                <div class="form-group">
+                                    <label>审批通过邮件内容</label>
+                                    <textarea name="email_template" rows="4" placeholder="用户通过审批后收到的邮件内容..."></textarea>
+                                    <div class="hint">该内容将在审批通过后通过邮件发送给申请者。</div>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <span class="icon"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg></span> 保存配置
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 模态框 ==================== -->
+    <div class="modal-overlay" id="detail-modal" onclick="if(event.target===this)closeModal(&#39;detail-modal&#39;)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><span class="icon"><svg viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></span> 申请详情</h3>
+                <span class="modal-close" onclick="closeModal(&#39;detail-modal&#39;)"><span class="icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span></span>
+            </div>
+            <div class="modal-body" id="detail-content"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal(&#39;detail-modal&#39;)">
+                    <span class="icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span> 关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="add-approver-modal" onclick="if(event.target===this)closeModal(&#39;add-approver-modal&#39;)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><span class="icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></span> 新增审批者</h3>
+                <span class="modal-close" onclick="closeModal(&#39;add-approver-modal&#39;)"><span class="icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span></span>
+            </div>
+            <div class="modal-body">
+                <div id="add-approver-alert"></div>
+                <form id="add-approver-form">
+                    <div class="form-group">
+                        <label class="required">审批者邮箱</label>
+                        <div class="search-box">
+                            <span class="icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></span>
+                            <input type="email" name="email" required="" placeholder="请输入审批者的邮箱地址">
+                        </div>
+                        <div class="hint">该邮箱将用于登录审批系统。</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal(&#39;add-approver-modal&#39;)">
+                    <span class="icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span> 取消
+                </button>
+                <button class="btn btn-success" onclick="submitAddApprover()">
+                    <span class="icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> 确认添加
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="add-admin-modal" onclick="if(event.target===this)closeModal(&#39;add-admin-modal&#39;)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><span class="icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></span> 新增管理员</h3>
+                <span class="modal-close" onclick="closeModal(&#39;add-admin-modal&#39;)"><span class="icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span></span>
+            </div>
+            <div class="modal-body">
+                <div id="add-admin-alert"></div>
+                <form id="add-admin-form">
+                    <div class="form-group"><label class="required">管理员账号</label><div class="search-box"><span class="icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span><input type="text" name="username" required="" placeholder="请输入新管理员账号"></div></div>
+                    <div class="form-group"><label class="required">管理员密码</label><div class="search-box"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span><input type="password" name="password" required="" placeholder="请输入登录密码"></div></div>
+                    <div class="form-group"><label class="required">确认密码</label><div class="search-box"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span><input type="password" name="password_confirm" required="" placeholder="请再次输入密码"></div></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal(&#39;add-admin-modal&#39;)"><span class="icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span> 取消</button>
+                <button class="btn btn-success" onclick="submitAddAdmin()"><span class="icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> 确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="edit-admin-modal" onclick="if(event.target===this)closeModal(&#39;edit-admin-modal&#39;)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><span class="icon"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg></span> 修改密码</h3>
+                <span class="modal-close" onclick="closeModal(&#39;edit-admin-modal&#39;)"><span class="icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span></span>
+            </div>
+            <div class="modal-body">
+                <div id="edit-admin-alert"></div>
+                <form id="edit-admin-form">
+                    <input type="hidden" name="edit_username">
+                    <div class="form-group"><label class="required">新密码</label><div class="search-box"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span><input type="password" name="new_password" required="" placeholder="请输入新密码"></div></div>
+                    <div class="form-group"><label class="required">确认新密码</label><div class="search-box"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span><input type="password" name="new_password_confirm" required="" placeholder="请再次输入新密码"></div></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal(&#39;edit-admin-modal&#39;)"><span class="icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span> 取消</button>
+                <button class="btn btn-success" onclick="submitEditAdmin()"><span class="icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></span> 确认修改</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ============================================================
+    // ===== 配置区 =====
+    // ============================================================
+    const SUPABASE_URL = 'https://joxiwptaclkwkphylzlr.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_M3J-QwvRR1rP9wLcDX84zA_CJjUr5GK';
+
+    // ============================================================
+    // ===== 初始化 =====
+    // ============================================================
+    let supabase = null;
+    let isSupabaseReady = false;
+    let supabaseError = '';
+    let currentPage = 'home-page';
+    let currentRole = null;
+    let currentUser = null;
+    let systemConfig = {};
+
+    function initSupabase() {
+        if (typeof supabaseJs === 'undefined' || !supabaseJs.createClient) {
+            supabaseError = 'Supabase 库加载失败，请检查网络连接后刷新页面重试';
+            console.warn(supabaseError);
+            return false;
+        }
+        const url = SUPABASE_URL || localStorage.getItem('supabase_url') || '';
+        const key = SUPABASE_ANON_KEY || localStorage.getItem('supabase_anon_key') || '';
+        if (!url || !key) {
+            supabaseError = 'Supabase 未配置，请在系统配置中填写数据库信息';
+            console.warn(supabaseError);
+            return false;
+        }
+        try {
+            supabase = supabaseJs.createClient(url, key);
+            isSupabaseReady = true;
+            supabaseError = '';
+            return true;
+        } catch (e) {
+            supabaseError = 'Supabase 初始化失败: ' + e.message;
+            console.error(supabaseError, e);
+            return false;
+        }
+    }
+
+    async function loadSystemConfig() {
+        if (!isSupabaseReady) return;
+        try {
+            const { data, error } = await supabase.from('system_config').select('*').limit(1).single();
+            if (data && !error) {
+                systemConfig = data;
+                if (systemConfig.supabase_url) localStorage.setItem('supabase_url', systemConfig.supabase_url);
+                if (systemConfig.supabase_anon_key) localStorage.setItem('supabase_anon_key', systemConfig.supabase_anon_key);
+            }
+        } catch (e) { console.log('系统配置加载失败'); }
+    }
+
+    async function initSystem() {
+        try {
+            let supabaseOk = initSupabase();
+            if (!supabaseOk) supabaseOk = initSupabase();
+            if (supabaseOk) {
+                try {
+                    await loadSystemConfig();
+                    await ensureDefaultData();
+                } catch (e) {
+                    console.error('加载系统配置失败', e);
+                    showSysAlert('数据库连接异常，部分功能可能不可用');
+                }
+            } else {
+                showSysAlert(supabaseError || '系统数据库连接失败，部分功能不可用');
+            }
+        } catch (e) {
+            console.error('系统初始化错误', e);
+            showSysAlert('系统初始化出错，请刷新页面重试');
+        }
+        // 无论 Supabase 是否成功，都绑定事件和更新导航栏
+        try {
+            bindEvents();
+        } catch (e) {
+            console.error('事件绑定失败', e);
+        }
+        try {
+            updateUserBar();
+        } catch (e) {
+            console.error('导航栏更新失败', e);
+        }
+    }
+
+    async function ensureDefaultData() {
+        if (!isSupabaseReady) return;
+        try {
+            const { count } = await supabase.from('admins').select('*', { count: 'exact', head: true });
+            if (count === 0) {
+                await supabase.from('admins').insert([{ username: 'admin', password: 'admin123' }]);
+            }
+            const { count: c2 } = await supabase.from('system_config').select('*', { count: 'exact', head: true });
+            if (c2 === 0) {
+                await supabase.from('system_config').insert([{ email_template: '尊敬的师兄，您的账号已开通/解锁完毕，请及时登录并修改密码。' }]);
+            }
+        } catch (e) { console.error('初始化默认数据失败', e); }
+    }
+
+    function showSysAlert(msg) {
+        const el = document.getElementById('sys-alert');
+        el.textContent = msg;
+        el.classList.add('active');
+    }
+    function hideSysAlert() {
+        document.getElementById('sys-alert').classList.remove('active');
+    }
+
+    function showLoading() { document.getElementById('loading-overlay').classList.add('active'); }
+    function hideLoading() { document.getElementById('loading-overlay').classList.remove('active'); }
+
+    // ============================================================
+    // ===== 绑定事件 =====
+    // ============================================================
+    function bindEvents() {
+        document.getElementById('account-apply-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!isSupabaseReady) { showToast('Supabase 未配置，请检查系统配置', 'error'); return; }
+            const formData = new FormData(this);
+            const applyData = { status: 'pending', approver: '', approve_time: '' };
+            formData.forEach((v, k) => { applyData[k] = v; });
+            showLoading();
+            const { error } = await supabase.from('account_applies').insert([applyData]);
+            hideLoading();
+            if (error) { showToast('提交失败：' + error.message, 'error'); return; }
+            showToast('账号申请提交成功！请等待审批', 'success');
+            this.reset();
+            await notifyOnNewApply(applyData.name || '', applyData.email || '', getAccountTypeText(applyData.account_type) + '申请');
+        });
+
+        document.getElementById('account-unlock-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!isSupabaseReady) { showToast('Supabase 未配置', 'error'); return; }
+            const formData = new FormData(this);
+            const unlockData = { status: 'pending', approver: '', approve_time: '' };
+            formData.forEach((v, k) => { unlockData[k] = v; });
+            showLoading();
+            const { error } = await supabase.from('unlock_applies').insert([unlockData]);
+            hideLoading();
+            if (error) { showToast('提交失败：' + error.message, 'error'); return; }
+            showToast('账号解锁申请提交成功！请等待审批', 'success');
+            this.reset();
+            await notifyOnNewApply(unlockData.account_id || '', unlockData.email || '', '账号解锁申请');
+        });
+
+        document.getElementById('approver-login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!isSupabaseReady) { showToast('Supabase 未配置，无法登录', 'error'); return; }
+            const email = this.email.value.trim().toLowerCase();
+            const alertEl = document.getElementById('approver-login-alert');
+            alertEl.innerHTML = '';
+            showLoading();
+            const { data: approver, error } = await supabase.from('approvers').select('*').eq('email', email).single();
+            hideLoading();
+            if (error || !approver) {
+                alertEl.innerHTML = '<div class="alert alert-error"><span class="icon icon-sm"><svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"16\" x2=\"12.01\" y2=\"16\"/></svg></span> 该邮箱未被管理员授权，无法登录</div>';
+                return;
+            }
+            if (approver.status === 'disabled') {
+                alertEl.innerHTML = '<div class="alert alert-error"><span class="icon icon-sm"><svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"16\" x2=\"12.01\" y2=\"16\"/></svg></span> 该账号已被管理员禁用</div>';
+                return;
+            }
+            currentUser = approver; currentRole = 'approver';
+            goToPage('approver-main-page'); loadApproverData(); this.reset();
+            showToast('登录成功，欢迎回来', 'success');
+        });
+
+        document.getElementById('admin-login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!isSupabaseReady) { showToast('Supabase 未配置，无法登录', 'error'); return; }
+            const username = this.username.value.trim();
+            const password = this.password.value.trim();
+            const alertEl = document.getElementById('admin-login-alert');
+            alertEl.innerHTML = '';
+            showLoading();
+            const { data: admin, error } = await supabase.from('admins').select('*').eq('username', username).eq('password', password).single();
+            hideLoading();
+            if (error || !admin) {
+                alertEl.innerHTML = '<div class="alert alert-error"><span class="icon icon-sm"><svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"16\" x2=\"12.01\" y2=\"16\"/></svg></span> 管理员账号或密码错误</div>';
+                return;
+            }
+            currentUser = admin; currentRole = 'admin';
+            goToPage('admin-main-page'); loadAdminData(); this.reset();
+            showToast('管理员登录成功', 'success');
+        });
+
+        document.getElementById('admin-config-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!isSupabaseReady) { showToast('Supabase 未配置', 'error'); return; }
+            const fields = ['email_template','emailjs_service_id','emailjs_template_id','emailjs_public_key','admin_notify_email','supabase_url','supabase_anon_key'];
+            const updateData = {};
+            fields.forEach(f => { const el = this[f]; if (el) updateData[f] = el.value.trim(); });
+            if (updateData.supabase_url) localStorage.setItem('supabase_url', updateData.supabase_url);
+            if (updateData.supabase_anon_key) localStorage.setItem('supabase_anon_key', updateData.supabase_anon_key);
+            showLoading();
+            const { data: existing } = await supabase.from('system_config').select('id').limit(1).single();
+            if (existing) { await supabase.from('system_config').update(updateData).eq('id', existing.id); }
+            else { await supabase.from('system_config').insert([updateData]); }
+            hideLoading();
+            await loadSystemConfig();
+            showToast('系统配置保存成功', 'success');
+        });
+    }
+
+    // ============================================================
+    // ===== 页面与导航 =====
+    // ============================================================
+    function goToPage(pageId) {
+        try {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById(pageId);
+            if (target) target.classList.add('active');
+            currentPage = pageId;
+            try { updateUserBar(); } catch (e) { console.error('updateUserBar 出错', e); }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (e) {
+            console.error('goToPage 出错', e);
+            // 最基本的回退：直接显示目标页面
+            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+            const target = document.getElementById(pageId);
+            if (target) target.style.display = 'block';
+        }
+    }
+
+    function updateUserBar() {
+        const bar = document.getElementById('user-bar');
+        const info = document.getElementById('user-info');
+        const breadcrumb = document.getElementById('breadcrumb');
+        const map = {
+            'home-page': { name: '首页', parent: null },
+            'applicant-page': { name: '账号申请', parent: 'home-page' },
+            'approver-login-page': { name: '审批者登录', parent: 'home-page' },
+            'approver-main-page': { name: '审批管理', parent: 'home-page' },
+            'admin-login-page': { name: '管理员登录', parent: 'home-page' },
+            'admin-main-page': { name: '系统管理', parent: 'home-page' }
+        };
+        if (currentPage === 'home-page') { bar.classList.remove('active'); return; }
+        bar.classList.add('active');
+        const p = map[currentPage] || { name: '页面', parent: 'home-page' };
+        let bc = '';
+        if (p.parent) {
+            bc += `<a onclick="goToPage('${p.parent}')"><span class="icon icon-sm"><svg viewBox=\"0 0 24 24\"><path d=\"M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/><polyline points=\"9 22 9 12 15 12 15 22\"/></svg></span> 首页</a>`;
+            bc += `<span class="sep"><span class="icon icon-sm"><svg viewBox=\"0 0 24 24\"><polyline points=\"9 18 15 12 9 6\"/></svg></span></span>`;
+        }
+        bc += `<span class="current">${p.name}</span>`;
+        breadcrumb.innerHTML = bc;
+        if (currentUser) {
+            info.style.display = 'flex';
+            const name = currentRole === 'approver' ? currentUser.email.split('@')[0] : currentUser.username;
+            document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
+            document.getElementById('user-name').textContent = currentRole === 'approver' ? currentUser.email : currentUser.username;
+            document.getElementById('user-role').textContent = currentRole === 'approver' ? '审批者' : '管理员';
+        } else { info.style.display = 'none'; }
+    }
+
+    function handleLogout() { currentUser = null; currentRole = null; showToast('已安全退出', 'info'); goToPage('home-page'); }
+    function logoutApprover() { handleLogout(); }
+    function logoutAdmin() { handleLogout(); }
+
+    function switchTab(tabEl, tabId) {
+        try {
+            const container = tabEl.closest('.tabs-wrapper');
+            if (!container) return;
+            container.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+            container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            tabEl.classList.add('active');
+            const target = document.getElementById(tabId);
+            if (target) target.classList.add('active');
+        } catch (e) {
+            console.error('switchTab 出错', e);
+        }
+    }
+
+    // ============================================================
+    // ===== 邮件 =====
+    // ============================================================
+    async function sendEmail(toEmail, subject, message, applicantName, applyType) {
+        if (!systemConfig.emailjs_service_id || !systemConfig.emailjs_template_id || !systemConfig.emailjs_public_key) {
+            console.log('EmailJS 未配置，跳过邮件发送'); return false;
+        }
+        try {
+            await emailjs.send(systemConfig.emailjs_service_id, systemConfig.emailjs_template_id,
+                { to_email: toEmail, subject: subject, message: message, applicant_name: applicantName || '', apply_type: applyType || '', from_name: '觉醒之道账号审批系统' },
+                systemConfig.emailjs_public_key);
+            return true;
+        } catch (err) { console.error('邮件发送失败', err); return false; }
+    }
+
+    async function notifyOnNewApply(applicantName, applicantEmail, applyType) {
+        if (!isSupabaseReady) return;
+        const subject = '【觉醒之道】新的账号申请待审批';
+        const message = `您好，${applicantName}（${applicantEmail}）提交了一份新的${applyType}，请及时登录审批系统处理。`;
+        const { data: approvers } = await supabase.from('approvers').select('email').eq('status', 'enabled');
+        if (approvers) { for (const a of approvers) { await sendEmail(a.email, subject, message, applicantName, applyType); } }
+        if (systemConfig.admin_notify_email) { await sendEmail(systemConfig.admin_notify_email, subject, message, applicantName, applyType); }
+    }
+
+    async function notifyApplicantResult(userEmail, result) {
+        const subject = result === 'approved' ? '【觉醒之道】您的账号申请已通过' : '【觉醒之道】您的账号申请被驳回';
+        const message = result === 'approved' ? (systemConfig.email_template || '尊敬的师兄，您的账号已开通/解锁完毕，请及时登录并修改密码。') : '很抱歉，您的账号申请未被通过，如有疑问请联系管理员。';
+        await sendEmail(userEmail, subject, message, '', '');
+    }
+
+    // ============================================================
+    // ===== 数据加载 =====
+    // ============================================================
+    async function loadApproverData() {
+        if (!isSupabaseReady) return;
+        await loadApproverApplyTable(); await loadApproverUnlockTable(); await updateApproverStats();
+    }
+
+    async function updateApproverStats() {
+        if (!isSupabaseReady) return;
+        const { count: ap } = await supabase.from('account_applies').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+        const { count: up } = await supabase.from('unlock_applies').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+        const { count: aa } = await supabase.from('account_applies').select('*', { count: 'exact', head: true }).eq('status', 'approved');
+        const { count: ua } = await supabase.from('unlock_applies').select('*', { count: 'exact', head: true }).eq('status', 'approved');
+        const { count: ar } = await supabase.from('account_applies').select('*', { count: 'exact', head: true }).eq('status', 'rejected');
+        const { count: ur } = await supabase.from('unlock_applies').select('*', { count: 'exact', head: true }).eq('status', 'rejected');
+        const { count: at } = await supabase.from('account_applies').select('*', { count: 'exact', head: true });
+        const { count: ut } = await supabase.from('unlock_applies').select('*', { count: 'exact', head: true });
+        document.getElementById('approver-stat-pending').textContent = (ap || 0) + (up || 0);
+        document.getElementById('approver-stat-approved').textContent = (aa || 0) + (ua || 0);
+        document.getElementById('approver-stat-rejected').textContent = (ar || 0) + (ur || 0);
+        document.getElementById('approver-stat-total').textContent = (at || 0) + (ut || 0);
+        document.getElementById('badge-approver-apply').textContent = (ap || 0);
+        document.getElementById('badge-approver-unlock').textContent = (up || 0);
+    }
+
+    async function loadApproverApplyTable() {
+        if (!isSupabaseReady) return;
+        const { data: applies, error } = await supabase.from('account_applies').select('*').order('id', { ascending: false });
+        const tbody = document.querySelector('#approver-apply-table tbody'); tbody.innerHTML = '';
+        if (error || !applies || applies.length === 0) { tbody.innerHTML = emptyRow(6); return; }
+        applies.forEach(a => { tbody.appendChild(createApplyRow(a, 'account')); });
+    }
+
+    async function loadApproverUnlockTable() {
+        if (!isSupabaseReady) return;
+        const { data: unlocks, error } = await supabase.from('unlock_applies').select('*').order('id', { ascending: false });
+        const tbody = document.querySelector('#approver-unlock-table tbody'); tbody.innerHTML = '';
+        if (error || !unlocks || unlocks.length === 0) { tbody.innerHTML = emptyRow(5); return; }
+        unlocks.forEach(u => { tbody.appendChild(createUnlockRow(u)); });
+    }
+
+    async function loadAdminData() {
+        if (!isSupabaseReady) return;
+        await loadAdminApproverTable(); await loadAdminApplyTable(); await loadAdminUnlockTable(); await loadAdminAdminTable(); await loadAdminConfigForm(); await updateAdminStats();
+    }
+
+    async function updateAdminStats() {
+        if (!isSupabaseReady) return;
+        const { count: ap } = await supabase.from('account_applies').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+        const { count: up } = await supabase.from('unlock_applies').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+        const { count: aa } = await supabase.from('account_applies').select('*', { count: 'exact', head: true }).eq('status', 'approved');
+        const { count: ua } = await supabase.from('unlock_applies').select('*', { count: 'exact', head: true }).eq('status', 'approved');
+        const { count: ar } = await supabase.from('account_applies').select('*', { count: 'exact', head: true }).eq('status', 'rejected');
+        const { count: ur } = await supabase.from('unlock_applies').select('*', { count: 'exact', head: true }).eq('status', 'rejected');
+        const { count: apv } = await supabase.from('approvers').select('*', { count: 'exact', head: true });
+        document.getElementById('admin-stat-pending').textContent = (ap || 0) + (up || 0);
+        document.getElementById('admin-stat-approved').textContent = (aa || 0) + (ua || 0);
+        document.getElementById('admin-stat-rejected').textContent = (ar || 0) + (ur || 0);
+        document.getElementById('admin-stat-approvers').textContent = (apv || 0);
+    }
+
+    async function loadAdminApproverTable() {
+        if (!isSupabaseReady) return;
+        const { data: approvers, error } = await supabase.from('approvers').select('*').order('id', { ascending: true });
+        const tbody = document.querySelector('#admin-approver-table tbody'); tbody.innerHTML = '';
+        if (error || !approvers || approvers.length === 0) { tbody.innerHTML = emptyRow(5); return; }
+        approvers.forEach((a, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${i+1}</td><td>${a.email}</td><td><span class="status-badge status-${a.status}"><span class="dot"></span>${a.status==='enabled'?'已启用':'已禁用'}</span></td><td>${a.created_at?new Date(a.created_at).toLocaleString():'-'}</td><td><div class="action-btns">${a.status==='enabled'?`<button class="btn btn-warning btn-sm" onclick="toggleApproverStatus('${a.email}','disabled')"><span class="icon"><svg viewBox=\"0 0 24 24\"><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\"/><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\"/></svg></span> 禁用</button>`:`<button class="btn btn-success btn-sm" onclick="toggleApproverStatus('${a.email}','enabled')"><span class="icon"><svg viewBox=\"0 0 24 24\"><polygon points=\"5 3 19 12 5 21 5 3\"/></svg></span> 启用</button>`}<button class="btn btn-danger btn-sm" onclick="deleteApprover('${a.email}')"><span class="icon"><svg viewBox=\"0 0 24 24\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/></svg></span> 删除</button></div></td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function loadAdminApplyTable() {
+        if (!isSupabaseReady) return;
+        const { data: applies, error } = await supabase.from('account_applies').select('*').order('id', { ascending: false });
+        const tbody = document.querySelector('#admin-apply-table tbody'); tbody.innerHTML = '';
+        if (error || !applies || applies.length === 0) { tbody.innerHTML = emptyRow(6); return; }
+        applies.forEach(a => { tbody.appendChild(createApplyRow(a, 'account')); });
+    }
+
+    async function loadAdminUnlockTable() {
+        if (!isSupabaseReady) return;
+        const { data: unlocks, error } = await supabase.from('unlock_applies').select('*').order('id', { ascending: false });
+        const tbody = document.querySelector('#admin-unlock-table tbody'); tbody.innerHTML = '';
+        if (error || !unlocks || unlocks.length === 0) { tbody.innerHTML = emptyRow(5); return; }
+        unlocks.forEach(u => { tbody.appendChild(createUnlockRow(u)); });
+    }
+
+    async function loadAdminAdminTable() {
+        if (!isSupabaseReady) return;
+        const { data: admins, error } = await supabase.from('admins').select('*').order('id', { ascending: true });
+        const tbody = document.querySelector('#admin-admin-table tbody'); tbody.innerHTML = '';
+        if (error || !admins || admins.length === 0) { tbody.innerHTML = emptyRow(4); return; }
+        admins.forEach((a, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${i+1}</td><td>${a.username}</td><td>${a.created_at?new Date(a.created_at).toLocaleString():'-'}</td><td><div class="action-btns"><button class="btn btn-outline btn-sm" onclick="openEditAdminModal('${a.username}')"><span class="icon"><svg viewBox=\"0 0 24 24\"><path d=\"M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4\"/></svg></span> 改密</button>${admins.length>1?`<button class="btn btn-danger btn-sm" onclick="deleteAdmin('${a.username}')"><span class="icon"><svg viewBox=\"0 0 24 24\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/></svg></span> 删除</button>`:''}</div></td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function loadAdminConfigForm() {
+        if (!isSupabaseReady) return;
+        const { data: config, error } = await supabase.from('system_config').select('*').limit(1).single();
+        if (error || !config) return;
+        const f = document.getElementById('admin-config-form');
+        if (f.email_template) f.email_template.value = config.email_template || '';
+        if (f.emailjs_service_id) f.emailjs_service_id.value = config.emailjs_service_id || '';
+        if (f.emailjs_template_id) f.emailjs_template_id.value = config.emailjs_template_id || '';
+        if (f.emailjs_public_key) f.emailjs_public_key.value = config.emailjs_public_key || '';
+        if (f.admin_notify_email) f.admin_notify_email.value = config.admin_notify_email || '';
+        if (f.supabase_url) f.supabase_url.value = config.supabase_url || '';
+        if (f.supabase_anon_key) f.supabase_anon_key.value = config.supabase_anon_key || '';
+    }
+
+    // ============================================================
+    // ===== 表格行 =====
+    // ============================================================
+    function createApplyRow(apply, type) {
+        const tr = document.createElement('tr');
+        tr.dataset.search = `${apply.name||''} ${apply.email||''} ${apply.account_type||''}`.toLowerCase();
+        const ct = apply.created_at ? new Date(apply.created_at).toLocaleString() : (apply.create_time || '-');
+        tr.innerHTML = `<td>${ct}</td><td>${apply.name||'-'}</td><td>${apply.email||'-'}</td><td>${getAccountTypeText(apply.account_type)}</td><td><span class="status-badge status-${apply.status}"><span class="dot"></span>${getStatusText(apply.status)}</span></td><td><div class="action-btns"><button class="btn btn-outline btn-sm" onclick="viewApplyDetail('${type}',${apply.id})"><span class="icon"><svg viewBox=\"0 0 24 24\"><path d=\"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></svg></span> 查看</button>${apply.status==='pending'?`<button class="btn btn-success btn-sm" onclick="approveApply('${type}',${apply.id})"><span class="icon"><svg viewBox=\"0 0 24 24\"><polyline points=\"20 6 9 17 4 12\"/></svg></span> 通过</button><button class="btn btn-danger btn-sm" onclick="rejectApply('${type}',${apply.id})"><span class="icon"><svg viewBox=\"0 0 24 24\"><line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"/><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"/></svg></span> 驳回</button>`:''}</div></td>`;
+        return tr;
+    }
+
+    function createUnlockRow(unlock) {
+        const tr = document.createElement('tr');
+        tr.dataset.search = `${unlock.account_id||''} ${unlock.email||''}`.toLowerCase();
+        const ct = unlock.created_at ? new Date(unlock.created_at).toLocaleString() : (unlock.create_time || '-');
+        tr.innerHTML = `<td>${ct}</td><td>${unlock.account_id||'-'}</td><td>${unlock.email||'-'}</td><td><span class="status-badge status-${unlock.status}"><span class="dot"></span>${getStatusText(unlock.status)}</span></td><td><div class="action-btns"><button class="btn btn-outline btn-sm" onclick="viewApplyDetail('unlock',${unlock.id})"><span class="icon"><svg viewBox=\"0 0 24 24\"><path d=\"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></svg></span> 查看</button>${unlock.status==='pending'?`<button class="btn btn-success btn-sm" onclick="approveApply('unlock',${unlock.id})"><span class="icon"><svg viewBox=\"0 0 24 24\"><polyline points=\"20 6 9 17 4 12\"/></svg></span> 通过</button><button class="btn btn-danger btn-sm" onclick="rejectApply('unlock',${unlock.id})"><span class="icon"><svg viewBox=\"0 0 24 24\"><line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"/><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"/></svg></span> 驳回</button>`:''}</div></td>`;
+        return tr;
+    }
+
+    function emptyRow(colspan) {
+        return `<tr><td colspan="${colspan}"><div class="empty-state"><span class="icon"><svg viewBox=\"0 0 24 24\"><path d=\"M22 12h-4l-3 9L9 3l-3 9H2\"/></svg></span><p>暂无数据</p></div></td></tr>`;
+    }
+
+    function filterTable(tableId, keyword) {
+        const table = document.getElementById(tableId);
+        const rows = table.querySelectorAll('tbody tr');
+        const kw = keyword.toLowerCase().trim();
+        rows.forEach(row => { if (!row.dataset.search) return; row.style.display = row.dataset.search.includes(kw) ? '' : 'none'; });
+    }
+
+    // ============================================================
+    // ===== 详情与审批 =====
+    // ============================================================
+    async function viewApplyDetail(type, id) {
+        if (!isSupabaseReady) return;
+        const table = type === 'account' ? 'account_applies' : 'unlock_applies';
+        const { data, error } = await supabase.from(table).select('*').eq('id', id).single();
+        if (error || !data) return;
+        const detailContent = document.getElementById('detail-content');
+        let html = '';
+        for (const key in data) {
+            if (['id','approver','approve_time','created_at'].includes(key)) continue;
+            const label = getFieldLabel(key); let value = data[key] || '无';
+            if (key === 'account_type') value = getAccountTypeText(value);
+            if (key === 'status') value = `<span class="status-badge status-${value}"><span class="dot"></span>${getStatusText(value)}</span>`;
+            html += `<div class="detail-row"><div class="detail-label">${label}</div><div class="detail-value">${value}</div></div>`;
+        }
+        detailContent.innerHTML = html; openModal('detail-modal');
+    }
+
+    async function approveApply(type, id) {
+        if (!isSupabaseReady) return;
+        const table = type === 'account' ? 'account_applies' : 'unlock_applies';
+        const approverEmail = currentUser ? (currentUser.email || currentUser.username) : '系统管理员';
+        showLoading();
+        const { data: item } = await supabase.from(table).select('*').eq('id', id).single();
+        if (!item) { hideLoading(); return; }
+        const { error } = await supabase.from(table).update({ status: 'approved', approver: approverEmail, approve_time: new Date().toISOString() }).eq('id', id);
+        hideLoading();
+        if (error) { showToast('操作失败：' + error.message, 'error'); return; }
+        await notifyApplicantResult(item.email, 'approved');
+        showToast('审批通过！已向用户发送通知邮件', 'success'); refreshData();
+    }
+
+    async function rejectApply(type, id) {
+        if (!isSupabaseReady) return;
+        const table = type === 'account' ? 'account_applies' : 'unlock_applies';
+        const approverEmail = currentUser ? (currentUser.email || currentUser.username) : '系统管理员';
+        showLoading();
+        const { data: item } = await supabase.from(table).select('*').eq('id', id).single();
+        if (!item) { hideLoading(); return; }
+        const { error } = await supabase.from(table).update({ status: 'rejected', approver: approverEmail, approve_time: new Date().toISOString() }).eq('id', id);
+        hideLoading();
+        if (error) { showToast('操作失败：' + error.message, 'error'); return; }
+        await notifyApplicantResult(item.email, 'rejected');
+        showToast('申请已驳回，已通知用户', 'info'); refreshData();
+    }
+
+    async function refreshData() {
+        if (currentRole === 'approver') { await loadApproverData(); }
+        else if (currentRole === 'admin') { await loadAdminData(); }
+    }
+
+    // ============================================================
+    // ===== 审批者管理 =====
+    // ============================================================
+    async function toggleApproverStatus(email, status) {
+        if (!isSupabaseReady) return;
+        showLoading();
+        const { error } = await supabase.from('approvers').update({ status }).eq('email', email);
+        hideLoading();
+        if (error) { showToast('操作失败', 'error'); return; }
+        showToast(`审批者已${status==='enabled'?'启用':'禁用'}`, 'info');
+        await loadAdminApproverTable(); await updateAdminStats();
+    }
+
+    async function deleteApprover(email) {
+        if (!confirm('确定要删除该审批者账号吗？')) return;
+        if (!isSupabaseReady) return;
+        showLoading();
+        const { error } = await supabase.from('approvers').delete().eq('email', email);
+        hideLoading();
+        if (error) { showToast('删除失败', 'error'); return; }
+        showToast('审批者账号已删除', 'info');
+        await loadAdminApproverTable(); await updateAdminStats();
+    }
+
+    async function submitAddApprover() {
+        const form = document.getElementById('add-approver-form');
+        const email = form.email.value.trim().toLowerCase();
+        const alertEl = document.getElementById('add-approver-alert');
+        alertEl.innerHTML = '';
+        if (!email) { alertEl.innerHTML = '<div class="alert alert-error"><span class="icon icon-sm"><svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"16\" x2=\"12.01\" y2=\"16\"/></svg></span> 请输入邮箱地址</div>'; return; }
+        if (!isSupabaseReady) { showToast('Supabase 未配置', 'error'); return; }
+        showLoading();
+        const { data: existing } = await supabase.from('approvers').select('email').eq('email', email).single();
+        if (existing) { hideLoading(); alertEl.innerHTML = '<div class="alert alert-error"><span class="icon icon-sm"><svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"16\" x2=\"12.01\" y2=\"16\"/></svg></span> 该邮箱已存在</div>'; return; }
+        const { error } = await supabase.from('approvers').insert([{ email: email, status: 'enabled' }]);
+        hideLoading();
+        if (error) { showToast('添加失败：' + error.message, 'error'); return; }
+        showToast('审批者添加成功', 'success');
+        closeModal('add-approver-modal'); await loadAdminApproverTable(); await updateAdminStats(); form.reset();
+    }
+
+    // ============================================================
+    // ===== 管理员管理 =====
+    // ============================================================
+    async function submitAddAdmin() {
+        const form = document.getElementById('add-admin-form');
+        const username = form.username.value.trim();
+        const password = form.password.value;
+        const passwordConfirm = form.password_confirm.value;
+        const alertEl = document.getElementById('add-admin-alert');
+        alertEl.innerHTML = '';
+        if (!username || !password) { alertEl.innerHTML = '<div class="alert alert-error"><span class="icon icon-sm"><svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"16\" x2=\"12.01\" y2=\"16\"/></svg></span> 请填写完整信息</div>'; return; }
+        if (password !== passwordConfirm) { alertEl.innerHTML = '<div class="alert alert-error"><span class="icon icon-sm"><svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"16\" x2=\"12.01\" y2=\"16\"/></svg></span> 两次密码不一致</div>'; return; }
+        if (!isSupabaseReady) { showToast('Supabase 未配置', 'error'); return; }
+        showLoading();
+        const { data: existing } = await supabase.from('admins').select('username').eq('username', username).single();
+        if (existing) { hideLoading(); alertEl.innerHTML = '<div class="alert alert-error"><span class="icon icon-sm"><svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"16\" x2=\"12.01\" y2=\"16\"/></svg></span> 该账号已存在</div>'; return; }
+        const { error } = await supabase.from('admins').insert([{ username: username, password: password }]);
+        hideLoading();
+        if (error) { showToast('添加失败', 'error'); return; }
+        showToast('管理员账号添加成功', 'success');
+        closeModal('add-admin-modal'); await loadAdminAdminTable(); form.reset();
+    }
+
+    async function deleteAdmin(username) {
+        if (!confirm('确定要删除该管理员账号吗？')) return;
+        if (!isSupabaseReady) return;
+        showLoading();
+        const { count } = await supabase.from('admins').select('*', { count: 'exact', head: true });
+        if (count <= 1) { hideLoading(); showToast('至少保留一个管理员账号', 'error'); return; }
+        const { error } = await supabase.from('admins').delete().eq('username', username);
+        hideLoading();
+        if (error) { showToast('删除失败', 'error'); return; }
+        showToast('管理员账号已删除', 'info'); await loadAdminAdminTable();
+    }
+
+    function openEditAdminModal(username) {
+        const form = document.getElementById('edit-admin-form');
+        form.edit_username.value = username; form.new_password.value = ''; form.new_password_confirm.value = '';
+        document.getElementById('edit-admin-alert').innerHTML = ''; openModal('edit-admin-modal');
+    }
+
+    async function submitEditAdmin() {
+        const form = document.getElementById('edit-admin-form');
+        const username = form.edit_username.value;
+        const newPassword = form.new_password.value;
+        const newPasswordConfirm = form.new_password_confirm.value;
+        const alertEl = document.getElementById('edit-admin-alert');
+        alertEl.innerHTML = '';
+        if (!newPassword) { alertEl.innerHTML = '<div class="alert alert-error"><span class="icon icon-sm"><svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"16\" x2=\"12.01\" y2=\"16\"/></svg></span> 请输入新密码</div>'; return; }
+        if (newPassword !== newPasswordConfirm) { alertEl.innerHTML = '<div class="alert alert-error"><span class="icon icon-sm"><svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"16\" x2=\"12.01\" y2=\"16\"/></svg></span> 两次密码不一致</div>'; return; }
+        if (!isSupabaseReady) { showToast('Supabase 未配置', 'error'); return; }
+        showLoading();
+        const { error } = await supabase.from('admins').update({ password: newPassword }).eq('username', username);
+        hideLoading();
+        if (error) { showToast('修改失败', 'error'); return; }
+        showToast('密码修改成功', 'success'); closeModal('edit-admin-modal');
+    }
+
+    // ============================================================
+    // ===== 模态框 =====
+    // ============================================================
+    function openModal(modalId) { document.getElementById(modalId).classList.add('active'); document.body.style.overflow = 'hidden'; }
+    function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); document.body.style.overflow = ''; }
+
+    // ============================================================
+    // ===== Toast =====
+    // ============================================================
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div'); toast.className = `toast ${type}`;
+        const iconMap = { success: '<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>', error: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' };
+        toast.innerHTML = `<span class="icon">${iconMap[type] || iconMap.info}</span><span>${message}</span><span class="toast-close" onclick="this.parentElement.remove()">×</span>`;
+        container.appendChild(toast);
+        setTimeout(() => { toast.classList.add('leaving'); setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    // ============================================================
+    // ===== 工具函数 =====
+    // ============================================================
+    function getStatusText(status) { const map = { 'pending': '待审批', 'approved': '已通过', 'rejected': '已驳回' }; return map[status] || status; }
+    function getAccountTypeText(type) { const map = { 'student': '学员', 'volunteer': '志愿者', 'staff': '工作人员' }; return map[type] || type; }
+    function getFieldLabel(key) { const map = { 'create_time': '申请时间', 'status': '申请状态', 'name': '姓名', 'dharma_name': '法名', 'phone': '手机号码', 'email': '邮箱地址', 'position': '服务岗位', 'area': '所属区域', 'country': '国家', 'city': '城市', 'enroll_time': '入学时间', 'counselor': '辅导员', 'course_info': '课程信息', 'account_type': '账号类型', 'apply_desc': '申请说明', 'account_id': '觉醒之道账号', 'unlock_desc': '解锁说明' }; return map[key] || key; }
+
+    // 页面加载 - 使用 DOMContentLoaded 确保尽快初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM 已加载，开始初始化系统...');
+        initSystem();
+    });
+    </script>
+    <script src="./index_files/supabase-js@2"></script>
+    <script type="text/javascript" src="./index_files/email.min.js.下载"></script>
+
+
+</body></html>
